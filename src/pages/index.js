@@ -3,6 +3,7 @@ import { Link, graphql } from "gatsby"
 
 import Layout from "../components/layout"
 import SEO from "../components/seo"
+import Meetups from "../components/meetups"
 import { rhythm } from "../utils/typography"
 
 class BlogIndex extends React.Component {
@@ -35,6 +36,8 @@ class BlogIndex extends React.Component {
             </div>
           )
         })}
+
+        <Meetups data={data.meetupGroup} />
       </Layout>
     )
   }
@@ -62,6 +65,23 @@ export const pageQuery = graphql`
           }
         }
       }
+    }
+    meetupGroup {
+        childrenMeetupEvent {
+            name
+            status
+            time
+            local_date
+            local_time
+            venue {
+                name
+                address_1
+                city
+                localized_country_name
+            }
+            link
+            description
+        }
     }
   }
 `

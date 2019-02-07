@@ -74,5 +74,15 @@ module.exports = {
         pathToConfigModule: `src/utils/typography`,
       },
     },
+    {
+      resolve: `gatsby-source-meetup`,
+      options: {
+        key: process.env.MEETUP_API_KEY,
+        groupUrlName: "cologne-germany-high-performance-website-optimization-group",
+        status: "upcoming,past",
+        desc: "true",
+        page: 4
+      },
+    },
   ],
 }

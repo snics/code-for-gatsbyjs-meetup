@@ -1,0 +1,74 @@
+image: docker:latest
+services:
+  - docker:dind
+
+stages:
+  - build
+  - docker
+  - deploy
+
+# ===
+# Settings
+variables:
+  #Docker
+  DOCKER_DRIVER: overlay
+  DOCKER_USER: ''
+  DOCKER_PASSWORD: ''
+
+# ===
+# File cache
+# info: The makes npm install faster
+.npm: &node_cache
+  cache:
+    paths:
+      - node_modules/
+
+
+
+# Build all static files for nginx
+build:gatsby:
+  image: node:10
+  stage: build
+  <<: *node_cache
+  before_script:
+    - npm install
+  script:
+    - npm run build
+  artifacts:
+    name: gatsby_fils
+    expire_in: 1 day
+    paths:
+      - public
+  only:
+    - master
+    - develop
+
+
+# Build and push this to docker hub
+docker:production:
+  image: docker:latest
+  stage: docker
+  services:
+    - docker:dind
+  script:
+    - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+    - docker build --pull -t code-for-gatsbyjs-meetup:$CI_COMMIT_SHORT_SHA .
+    - docker push code-for-gatsbyjs-meetup:$CI_COMMIT_SHORT_SHA
+  only:
+    - master
+    - develop
+
+
+# Deploy production environment
+deploy production:
+  stage: deploy
+  image: dtzar/helm-kubectl:latest
+  services:
+    - docker:dind
+  script:
+    - cd ci/rancher
+    - export KUBECONFIG=kube-config.yml
+    - sed -ie "s/CI_COMMIT_SHA/$CI_COMMIT_SHA/g" production/deployment.yml
+    - kubectl apply -f production/deployment.yml
+  only:
+    - master
